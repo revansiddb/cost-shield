@@ -117,8 +117,10 @@ export const trackingService = {
       }
 
       // 4. Evaluate thresholds
-      const limit = project.dailyBudget; // BigInt
-      const currentTotal = dailyCost.totalCost; // BigInt
+      // NOTE: Sequelize + pg driver returns BIGINT columns as strings, not native BigInt.
+      // We must explicitly coerce to BigInt here before any arithmetic.
+      const limit = BigInt(project.dailyBudget);
+      const currentTotal = BigInt(dailyCost.totalCost);
 
       const percentUsed = limit > 0n ? Number((currentTotal * 100n) / limit) : 0;
 

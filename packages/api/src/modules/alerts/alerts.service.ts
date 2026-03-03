@@ -5,7 +5,15 @@ import { config } from '../../config';
 import { logger } from '../../utils';
 import { User } from '../../models';
 
-const resend = new Resend(config.resend.apiKey);
+// Lazy-initialized: only instantiated when an email is actually sent.
+// This prevents the module-load crash when RESEND_API_KEY is not set in dev.
+let _resend: Resend | null = null;
+const getResend = (): Resend => {
+  if (!_resend) {
+    _resend = new Resend(config.resend.apiKey);
+  }
+  return _resend;
+};
 
 export const alertsService = {
   /**
@@ -61,7 +69,7 @@ export const alertsService = {
         return;
       }
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: config.resend.fromEmail,
         to: user.email,
         subject: subject,

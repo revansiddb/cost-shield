@@ -1,28 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 
-// Extend Express Request to include our assumed user structure
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: {
-      id: string;
-      email?: string;
-    };
-  }
-}
+import { verifyToken, COOKIE_NAME } from '../utils/jwt';
+import { logger } from '../utils/logger';
 
-/**
- * Mock authentication middleware to satisfy route constraints before full auth module is built.
- * Assuming the Auth flow will eventually attach `req.user`.
- */
 export const requireAuth = (req: Request, res: Response, next: NextFunction): void => {
-  // Normally we would verify a JWT or session here
-  // For now, if no user is mocked, we could block it, but we assume it's injected before this.
+  const token: string | undefined = req.cookies?.[COOKIE_NAME];
 
-  if (!req.user || !req.user.id) {
-    // Return unauthorized if missing
-    res.status(401).json({ success: false, error: 'Unauthorized' });
+  if (!token) {
+    res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
     return;
   }
 
-  next();
+  try {
+    const payload = verifyToken(token);
+    req.user = { id: payload.userId, email: payload.email };
+    next();
+  } catch (err) {
+    logger.warn('Invalid JWT token', { error: err instanceof Error ? err.message : 'Unknown' });
+    res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or expired session' } });
+  }
 };

@@ -1,3 +1,3 @@
-// Auth module — GitHub OAuth + Google OAuth
-// Will be implemented in Step 5 of dev order
-export {};
+export * from './auth.controller';
+export * from './auth.routes';
+export * from './auth.service';

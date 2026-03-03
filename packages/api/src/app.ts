@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 import { config } from './config';
 import { trackingRoutes } from './modules/tracking';
 import { projectsRoutes } from './modules/projects';
+import { authRoutes } from './modules/auth';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -15,6 +17,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: config.dashboardUrl, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // =============================
 // Health Check
@@ -29,8 +32,10 @@ app.get('/health', (_req, res) => {
 // 1. POST /api/v1/track       — tracking module
 app.use('/api/v1', trackingRoutes);
 
-// 2. /api/auth/*               — auth module
-// 3. /api/projects/*           — projects module
+// 2. /api/v1/auth/*            — auth module (Google + GitHub OAuth, /me)
+app.use('/api/v1', authRoutes);
+
+// 3. /api/v1/projects/*        — projects module
 app.use('/api/v1/projects', projectsRoutes);
 
 // 4. /api/billing/*            — billing module (plan display only in v1)
