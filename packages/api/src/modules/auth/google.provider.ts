@@ -1,22 +1,6 @@
-import * as client from 'openid-client';
-
+import { OAuth2Client } from 'google-auth-library';
 import { config } from '../../config';
 import { logger } from '../../utils/logger';
-
-// ─── OpenID Configuration ───────────────────────────────────────────────────
-// Cached after first discovery (lazy initialized per cold-start)
-let _googleConfig: client.Configuration | null = null;
-
-const getGoogleConfig = async (): Promise<client.Configuration> => {
-  if (!_googleConfig) {
-    _googleConfig = await client.discovery(
-      new URL('https://accounts.google.com'),
-      config.google.clientId,
-      config.google.clientSecret,
-    );
-  }
-  return _googleConfig;
-};
 
 export interface GoogleUserInfo {
   sub: string;
@@ -25,57 +9,58 @@ export interface GoogleUserInfo {
   family_name?: string;
 }
 
-/**
- * Build the Google OAuth authorization URL.
- * Returns the redirect URL and the pkce code_verifier stored server-side for verification.
- */
-export const buildGoogleAuthUrl = async (
-  state: string,
-  codeVerifier: string,
-): Promise<URL> => {
-  const googleConfig = await getGoogleConfig();
-
-  const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
-
-  const params: Record<string, string> = {
-    redirect_uri: config.google.callbackUrl,
-    scope: 'openid email profile',
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-  };
-
-  return client.buildAuthorizationUrl(googleConfig, new URLSearchParams(params));
+const getClient = (): OAuth2Client => {
+  return new OAuth2Client(
+    config.google.clientId,
+    config.google.clientSecret,
+    config.google.callbackUrl
+  );
 };
 
 /**
- * Exchange code → tokens → verify → return user profile.
+ * Build the Google OAuth authorization URL.
+ */
+export const buildGoogleAuthUrl = (state: string): string => {
+  const client = getClient();
+  return client.generateAuthUrl({
+    access_type: 'online',
+    scope: ['email', 'profile', 'openid'],
+    state,
+  });
+};
+
+/**
+ * Exchange code → tokens → verify ID token → return user profile.
  */
 export const exchangeGoogleCode = async (
-  callbackUrl: URL,
-  expectedState: string,
-  codeVerifier: string,
+  code: string,
 ): Promise<GoogleUserInfo> => {
-  const googleConfig = await getGoogleConfig();
+  const client = getClient();
+  
+  // Exchange code for tokens
+  const { tokens } = await client.getToken(code);
+  
+  if (!tokens.id_token) {
+    throw new Error('No id_token in Google response');
+  }
 
-  const tokens = await client.authorizationCodeGrant(googleConfig, callbackUrl, {
-    pkceCodeVerifier: codeVerifier,
-    expectedState,
+  // Verify ID token and extract payload securely
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: config.google.clientId,
   });
 
-  // Extract claims from ID token (already verified by openid-client)
-  const claims = tokens.claims();
-  if (!claims) throw new Error('No claims in Google ID token');
+  const payload = ticket.getPayload();
+  if (!payload || !payload.email) {
+    throw new Error('Google token payload missing or has no email');
+  }
 
-  const email = claims.email as string | undefined;
-  if (!email) throw new Error('Google profile missing email');
-
-  logger.info('Google token exchange successful', { sub: claims.sub });
+  logger.info('Google token exchange successful', { sub: payload.sub });
 
   return {
-    sub: claims.sub,
-    email,
-    given_name: claims.given_name as string | undefined,
-    family_name: claims.family_name as string | undefined,
+    sub: payload.sub,
+    email: payload.email,
+    given_name: payload.given_name,
+    family_name: payload.family_name,
   };
 };

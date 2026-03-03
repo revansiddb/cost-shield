@@ -7,7 +7,7 @@ export interface JwtPayload {
   email: string;
 }
 
-const JWT_EXPIRES_IN: SignOptions['expiresIn'] = (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn'];
+const JWT_EXPIRES_IN: SignOptions['expiresIn'] = config.jwtExpiresIn as SignOptions['expiresIn'];
 const COOKIE_NAME = 'cs_auth';
 const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 

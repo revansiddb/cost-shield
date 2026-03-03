@@ -5,6 +5,7 @@ export const config = {
   // Server
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3001',
 
   // Database
   db: {
@@ -17,13 +18,14 @@ export const config = {
 
   // JWT
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
 
   // OAuth - GitHub
   github: {
     clientId: process.env.GITHUB_CLIENT_ID || '',
     clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
     callbackUrl:
-      process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/api/auth/github/callback',
+      process.env.GITHUB_CALLBACK_URL || 'http://localhost:3001/api/v1/auth/github/callback',
   },
 
   // OAuth - Google
@@ -31,7 +33,7 @@ export const config = {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     callbackUrl:
-      process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/auth/google/callback',
+      process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/v1/auth/google/callback',
   },
 
   // Resend
@@ -41,5 +43,5 @@ export const config = {
   },
 
   // Frontend
-  dashboardUrl: process.env.DASHBOARD_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 };

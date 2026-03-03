@@ -15,7 +15,7 @@ const app = express();
 // Middleware
 // =============================
 app.use(helmet());
-app.use(cors({ origin: config.dashboardUrl, credentials: true }));
+app.use(cors({ origin: config.frontendUrl, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
 import { Request, Response } from 'express';
-import * as client from 'openid-client';
 import { AuthProvider as AuthProviderEnum } from '@costshield/shared';
 
 import { config } from '../../config';
@@ -14,7 +13,7 @@ import { buildGitHubAuthUrl, exchangeGitHubCode } from './github.provider';
 import { findOrCreateFromOAuth } from './auth.service';
 
 const IS_PROD = config.nodeEnv === 'production';
-const FRONTEND_URL = process.env.FRONTEND_URL || config.dashboardUrl;
+const FRONTEND_URL = config.frontendUrl;
 
 /**
  * Issue JWT and set httpOnly cookie.
@@ -36,15 +35,13 @@ const issueAuthCookie = (res: Response, userId: string, email: string): void => 
 
 export const googleRedirect = async (req: Request, res: Response): Promise<void> => {
   try {
-    // PKCE: generate state + code_verifier, store in cookie for callback verification
+    // Generate state, store in cookie for callback verification
     const state = crypto.randomBytes(16).toString('hex');
-    const codeVerifier = client.randomPKCECodeVerifier();
 
-    // Store state and verifier in short-lived httpOnly cookies
+    // Store state in short-lived httpOnly cookie
     res.cookie('oauth_state', state, { httpOnly: true, maxAge: 10 * 60 * 1000, sameSite: 'lax' });
-    res.cookie('oauth_code_verifier', codeVerifier, { httpOnly: true, maxAge: 10 * 60 * 1000, sameSite: 'lax' });
 
-    const authUrl = await buildGoogleAuthUrl(state, codeVerifier);
+    const authUrl = buildGoogleAuthUrl(state);
     res.redirect(authUrl.toString());
   } catch (err) {
     logger.error('Google redirect failed', { error: err instanceof Error ? err.message : String(err) });
@@ -55,22 +52,17 @@ export const googleRedirect = async (req: Request, res: Response): Promise<void>
 export const googleCallback = async (req: Request, res: Response): Promise<void> => {
   try {
     const expectedState: string | undefined = req.cookies?.oauth_state;
-    const codeVerifier: string | undefined = req.cookies?.oauth_code_verifier;
+    const { code, state: receivedState } = req.query as Record<string, string>;
 
-    if (!expectedState || !codeVerifier) {
-      res.redirect(`${FRONTEND_URL}/auth/error?reason=missing_state`);
+    if (!expectedState || !receivedState || expectedState !== receivedState || !code) {
+      res.redirect(`${FRONTEND_URL}/auth/error?reason=missing_or_invalid_state`);
       return;
     }
 
-    // Clear PKCE cookies immediately
+    // Clear state cookie immediately
     res.clearCookie('oauth_state');
-    res.clearCookie('oauth_code_verifier');
 
-    // Build the full callback URL (needed by openid-client to extract code+state params)
-    const apiBase = process.env.API_BASE_URL || `http://localhost:${config.port}`;
-    const callbackUrl = new URL(`${apiBase}${req.originalUrl}`);
-
-    const profile = await exchangeGoogleCode(callbackUrl, expectedState, codeVerifier);
+    const profile = await exchangeGoogleCode(code);
 
     const { userId, email } = await findOrCreateFromOAuth({
       providerUid: profile.sub,
