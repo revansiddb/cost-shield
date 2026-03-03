@@ -1,0 +1,38 @@
+{
+  "name": "costshield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application-level API Cost Visibility for AI SaaS",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=packages/api",
+    "dev:dashboard": "npm run dev --workspace=packages/dashboard",
+    "build:api": "npm run build --workspace=packages/api",
+    "build:dashboard": "npm run build --workspace=packages/dashboard",
+    "build:sdk": "npm run build --workspace=packages/sdk",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "lint": "eslint packages/api/src packages/shared/src packages/sdk/src",
+    "lint:fix": "eslint --fix packages/api/src packages/shared/src packages/sdk/src",
+    "format": "prettier --write \"packages/**/src/**/*.ts\"",
+    "format:check": "prettier --check \"packages/**/src/**/*.ts\""
+  },
+  "keywords": [
+    "api-cost",
+    "visibility",
+    "sdk",
+    "saas"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.39.3",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.8.1"
+  }
+}
