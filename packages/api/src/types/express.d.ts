@@ -7,5 +7,6 @@ declare namespace Express {
       id: string;
       email: string;
     };
+    subscription?: any; // To hold the active subscription retrieved by middleare. Ideally typed cleanly across modules.
   }
 }

@@ -1,7 +1,8 @@
 import { AuthProvider as AuthProviderEnum } from '@costshield/shared';
 
 import { sequelize } from '../../database';
-import { User, AuthProvider } from '../../models';
+import { User, AuthProvider, Plan, Subscription } from '../../models';
+import { SubscriptionStatus, Gateway } from '@costshield/shared';
 import { logger } from '../../utils/logger';
 
 export interface OAuthProfile {
@@ -59,7 +60,25 @@ export const findOrCreateFromOAuth = async (profile: OAuthProfile): Promise<Auth
         isActive: true,
       }, { transaction: t });
 
-      logger.info('OAuth login: new user created', { provider: profile.provider, userId: user.id });
+      // Look up the Free plan
+      const freePlan = await Plan.findOne({ where: { name: 'Free' }, transaction: t });
+      if (!freePlan) {
+        throw new Error('Critical: Free plan not found in database. Did you run seeders?');
+      }
+
+      // Auto-provision 15-day trial subscription
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 15);
+
+      await Subscription.create({
+        userId: user.id,
+        planId: freePlan.id,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: trialEndsAt,
+      }, { transaction: t });
+
+      logger.info('OAuth login: new user created with free trial', { provider: profile.provider, userId: user.id });
     } else {
       logger.info('OAuth login: existing user, linking provider', { provider: profile.provider, userId: user.id });
     }
