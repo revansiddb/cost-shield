@@ -86,3 +86,6 @@ export interface ProjectSummary {
   alertThreshold: number;
   createdAt: string;
 }
+
+export * from './project.types';
+export * from './dashboard.types';

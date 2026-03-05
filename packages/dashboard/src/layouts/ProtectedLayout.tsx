@@ -4,6 +4,7 @@ import { Sidebar } from '../components/layout/Sidebar';
 import { Topbar } from '../components/layout/Topbar';
 import { useAuth } from '../hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { Toaster } from '../components/ui/toaster';
 
 export function ProtectedLayout() {
   const { user, isLoading } = useAuth();
@@ -54,6 +55,8 @@ export function ProtectedLayout() {
           </div>
         </div>
       )}
+      
+      <Toaster />
     </div>
   );
 }

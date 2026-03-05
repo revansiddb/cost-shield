@@ -7,6 +7,7 @@ import { config } from './config';
 import { trackingRoutes } from './modules/tracking';
 import { projectsRoutes } from './modules/projects';
 import { authRoutes } from './modules/auth';
+import { dashboardRoutes } from './modules/dashboard';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -38,7 +39,10 @@ app.use('/api/v1', authRoutes);
 // 3. /api/v1/projects/*        — projects module
 app.use('/api/v1/projects', projectsRoutes);
 
-// 4. /api/billing/*            — billing module (plan display only in v1)
+// 4. /api/v1/dashboard          — dashboard module (overview analytics)
+app.use('/api/v1', dashboardRoutes);
+
+// 5. /api/billing/*            — billing module (plan display only in v1)
 
 // =============================
 // Global Error Handler

@@ -51,3 +51,51 @@ export const createProject = async (payload: CreateProjectPayload): Promise<Crea
     throw error;
   }
 };
+
+// ─── Project Detail / Dashboard ──────────────────────────────────────────────
+
+export interface ProjectDetailMeta {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  dailyBudget: number;
+  monthlyBudget: number | null;
+  alertThreshold: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface ProjectTodayUsage {
+  cost: number;
+  requests: number;
+  budgetPercent: number;
+}
+
+export interface ProjectTrendPoint {
+  date: string;
+  cost: number;
+}
+
+export interface ProjectTrialStatus {
+  daysRemaining: number;
+  isExpired: boolean;
+}
+
+export interface ProjectIntegrationInfo {
+  sdk_install: string;
+  api_endpoint: string;
+  api_key_prefix: string;
+}
+
+export interface ProjectDashboardResponse {
+  project: ProjectDetailMeta;
+  todayUsage: ProjectTodayUsage;
+  trend7d: ProjectTrendPoint[];
+  trial: ProjectTrialStatus;
+  integration: ProjectIntegrationInfo;
+}
+
+export const getProjectDetail = async (projectId: string): Promise<ProjectDashboardResponse> => {
+  const { data } = await apiClient.get(`/projects/${projectId}`);
+  return data.data as ProjectDashboardResponse;
+};

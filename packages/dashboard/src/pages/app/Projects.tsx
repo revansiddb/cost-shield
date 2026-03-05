@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useProjects } from '../../hooks/useProjects';
 import { CreateProjectDialog } from '../../components/projects/CreateProjectDialog';
@@ -80,9 +81,14 @@ export default function Projects() {
               </TableRow>
             ) : (
               projects.map((project) => (
-                <TableRow key={project.id} className="group">
+                <TableRow key={project.id} className="group cursor-pointer">
                   <TableCell className="font-medium text-slate-900 dark:text-slate-100">
-                    {project.name}
+                    <Link
+                      to={`/app/projects/${project.id}`}
+                      className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {project.name}
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <Badge variant={project.status === 'active' ? 'success' : 'secondary'} className="capitalize">

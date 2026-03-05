@@ -93,15 +93,16 @@ export const projectsController = {
 
   /**
    * GET /api/v1/projects/:id
+   * Returns full project dashboard: metadata + today usage + 7-day trend + trial status
    */
   async getProjectById(req: Request<{ id: string }>, res: Response): Promise<void> {
     try {
       const userId = req.user!.id;
       const projectId = req.params.id;
 
-      const project = await projectsService.getProjectById(userId, projectId);
+      const dashboard = await projectsService.getProjectDashboard(userId, projectId);
 
-      if (!project) {
+      if (!dashboard) {
         res.status(404).json({ 
           success: false, 
           error: { code: 'NOT_FOUND', message: 'Project not found' } 
@@ -111,10 +112,10 @@ export const projectsController = {
 
       res.status(200).json({
         success: true,
-        data: project,
+        data: dashboard,
       });
     } catch (error) {
-      logger.error('Failed to get project', {
+      logger.error('Failed to get project dashboard', {
         error: error instanceof Error ? error.message : String(error),
       });
       res.status(500).json({ 
