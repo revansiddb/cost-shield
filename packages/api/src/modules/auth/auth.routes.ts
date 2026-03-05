@@ -25,6 +25,6 @@ router.get('/auth/github/callback', githubCallback);
 router.get('/auth/logout', logout);
 
 // ─── Profile ─────────────────────────────────────────────────
-router.get('/me', requireAuth, getMe);
+router.get('/auth/me', requireAuth, getMe);
 
 export { router as authRoutes };

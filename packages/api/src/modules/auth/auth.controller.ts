@@ -73,7 +73,7 @@ export const googleCallback = async (req: Request, res: Response): Promise<void>
     });
 
     issueAuthCookie(res, userId, email);
-    res.redirect(`${FRONTEND_URL}/dashboard`);
+    res.redirect(`${FRONTEND_URL}/app`);
   } catch (err) {
     logger.error('Google callback failed', { error: err instanceof Error ? err.message : String(err) });
     res.redirect(`${FRONTEND_URL}/auth/error?reason=google_callback_failed`);
@@ -113,7 +113,7 @@ export const githubCallback = async (req: Request, res: Response): Promise<void>
     });
 
     issueAuthCookie(res, userId, email);
-    res.redirect(`${FRONTEND_URL}/dashboard`);
+    res.redirect(`${FRONTEND_URL}/app`);
   } catch (err) {
     logger.error('GitHub callback failed', { error: err instanceof Error ? err.message : String(err) });
     res.redirect(`${FRONTEND_URL}/auth/error?reason=github_callback_failed`);

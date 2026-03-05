@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// Layouts
+import { PublicLayout } from './layouts/PublicLayout';
+import { ProtectedLayout } from './layouts/ProtectedLayout';
+
+// Public Pages
+import Landing from './pages/public/Landing';
+import Login from './pages/public/Login';
+import Pricing from './pages/public/Pricing';
+
+// Protected Pages
+import Overview from './pages/app/Overview';
+import Projects from './pages/app/Projects';
+import ProjectDetail from './pages/app/ProjectDetail';
+import Billing from './pages/app/Billing';
+import Settings from './pages/app/Settings';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/pricing" element={<Pricing />} />
+          {/* Docs placeholder could route here if needed */}
+        </Route>
+
+        {/* Protected Dashboard Routes */}
+        <Route path="/app" element={<ProtectedLayout />}>
+          <Route index element={<Overview />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
+          <Route path="billing" element={<Billing />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
