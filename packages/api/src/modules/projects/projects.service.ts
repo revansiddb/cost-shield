@@ -230,4 +230,43 @@ export const projectsService = {
       },
     };
   },
+
+  /**
+   * Update basic project configuration.
+   */
+  async updateProjectSettings(
+    projectId: string,
+    userId: string,
+    payload: { name?: string; daily_budget?: number; alert_threshold?: number }
+  ) {
+    const project = await Project.findOne({
+      where: {
+        id: projectId,
+        userId,
+      },
+    });
+
+    if (!project) {
+      return null;
+    }
+
+    if (payload.name !== undefined) {
+      project.name = payload.name;
+    }
+    if (payload.daily_budget !== undefined) {
+      project.dailyBudget = BigInt(payload.daily_budget);
+    }
+    if (payload.alert_threshold !== undefined) {
+      project.alertThreshold = payload.alert_threshold;
+    }
+
+    await project.save();
+
+    return {
+      id: project.id,
+      name: project.name,
+      daily_budget: Number(project.dailyBudget),
+      alert_threshold: project.alertThreshold,
+    };
+  },
 };

@@ -124,4 +124,44 @@ export const projectsController = {
       });
     }
   },
+
+  /**
+   * PATCH /api/v1/projects/:id
+   */
+  async updateProjectSettings(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const { id: projectId } = req.params;
+      const { name, daily_budget, alert_threshold } = req.body;
+
+
+
+      const updatedProject = await projectsService.updateProjectSettings(projectId as string, userId, {
+        name,
+        daily_budget,
+        alert_threshold,
+      });
+
+      if (!updatedProject) {
+        res.status(403).json({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Project not found or unauthorized' },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: updatedProject,
+      });
+    } catch (error) {
+      logger.error('Failed to update project settings', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Internal Server Error' },
+      });
+    }
+  },
 };

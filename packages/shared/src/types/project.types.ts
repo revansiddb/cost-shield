@@ -42,3 +42,16 @@ export interface ProjectDashboardResponse {
   trial: ProjectTrialStatus;
   integration: ProjectIntegrationInfo;
 }
+
+export interface UpdateProjectSettingsRequest {
+  name?: string;
+  daily_budget?: number;
+  alert_threshold?: number;
+}
+
+export interface ProjectSettingsResponse {
+  id: string;
+  name: string;
+  daily_budget: number;
+  alert_threshold: number;
+}
