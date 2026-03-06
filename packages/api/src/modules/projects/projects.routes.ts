@@ -21,6 +21,7 @@ router.post(
 );
 router.get('/', projectsController.listProjects.bind(projectsController));
 router.get('/:id', projectsController.getProjectById.bind(projectsController));
+router.get('/:id/alerts', projectsController.getProjectAlerts.bind(projectsController));
 router.patch(
   '/:id',
   updateProjectSettingsValidator,

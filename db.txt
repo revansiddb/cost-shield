@@ -1,0 +1,287 @@
+// =============================
+// ENUMS
+// =============================
+
+Enum subscription_status {
+  active
+  canceled
+  expired
+  past_due
+}
+
+Enum project_status {
+  active
+  suspended
+}
+
+Enum alert_type {
+  warning
+  critical
+}
+
+Enum payment_status {
+  succeeded
+  failed
+  refunded
+}
+
+Enum billing_interval {
+  monthly
+  yearly
+}
+
+Enum gateway {
+  razorpay
+  stripe
+  free
+}
+
+Enum auth_provider {
+  password
+  google
+  github
+}
+
+Enum user_role {
+  "role-admin"
+  "role-user"
+}
+
+
+// =============================
+// COUNTRIES
+// =============================
+
+Table countries {
+  id int [pk, increment]
+  iso varchar(2) [unique, not null]
+  currency varchar(3) [not null]
+  timezone varchar(50) [not null]
+  phone_code varchar(10)
+  is_supported boolean [default: true]
+}
+
+
+// =============================
+// USERS
+// =============================
+
+Table users {
+  id uuid [pk]
+  email varchar(255) [unique, not null]
+  first_name varchar(100)
+  last_name varchar(100)
+  phone varchar(20)
+  country_id int
+  role user_role [default: 'role-user']
+  email_verified boolean [default: false]
+  is_active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Ref: users.country_id > countries.id
+
+
+// =============================
+// AUTH PROVIDERS
+// =============================
+
+Table auth_providers {
+  id uuid [pk]
+  user_id uuid [not null]
+  provider auth_provider [not null]
+  provider_uid varchar(255)
+  password_hash varchar(255)
+  created_at timestamptz
+
+  Indexes {
+    (user_id, provider) [unique, name: 'uniq_user_provider']   // one entry per provider per user
+    (provider, provider_uid) [unique, name: 'uniq_oauth_identity'] // Gap §1.3: prevents same OAuth account linked twice
+  }
+}
+
+Ref: auth_providers.user_id > users.id
+
+
+// =============================
+// PLANS
+// =============================
+
+Table plans {
+  id uuid [pk]
+  name varchar(100) [not null]
+  slug varchar(100) [unique, not null]
+  amount bigint [not null] // smallest unit (paise/cents)
+  currency varchar(3) [not null]
+  interval billing_interval [not null]
+  request_limit int [not null]
+  project_limit int [not null]
+  description text
+  icon varchar(255)
+  is_active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+// =============================
+// SUBSCRIPTIONS
+// =============================
+
+Table subscriptions {
+  id uuid [pk]
+  user_id uuid [not null]
+  plan_id uuid [not null]
+  status subscription_status [not null]
+  gateway gateway [not null]
+  gateway_id varchar(255)
+  starts_at timestamptz
+  ends_at timestamptz
+  canceled_at timestamptz
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+// PRODUCTION REQUIRED — partial unique index (not expressible in DBML):
+// CREATE UNIQUE INDEX uniq_active_sub ON subscriptions(user_id) WHERE status = 'active';
+// Non-negotiable for financial integrity. Prevents duplicate active subscriptions from webhooks.
+
+Ref: subscriptions.user_id > users.id
+Ref: subscriptions.plan_id > plans.id
+
+
+// =============================
+// PAYMENTS
+// =============================
+
+Table payments {
+  id uuid [pk]
+  user_id uuid [not null]
+  subscription_id uuid [not null]
+  gateway gateway [not null]
+  txn_id varchar(255) [not null]
+  order_id varchar(255)
+  amount bigint [not null] // smallest unit
+  currency varchar(3) [not null]
+  status payment_status [not null]
+  paid_at timestamptz
+  created_at timestamptz
+  updated_at timestamptz
+
+  Indexes {
+    (gateway, txn_id) [unique, name: 'uniq_gateway_txn'] // Gap §1.2: prevents duplicate payment records from webhook retries
+  }
+}
+
+Ref: payments.user_id > users.id
+Ref: payments.subscription_id > subscriptions.id
+
+
+// =============================
+// PROJECTS
+// =============================
+
+Table projects {
+  id uuid [pk]
+  user_id uuid [not null]
+
+  name varchar(255) [not null]
+  slug varchar(255)
+
+  key_hash varchar(255) [unique, not null]
+  key_prefix varchar(50) [not null]
+
+  status project_status [default: 'active']
+
+  currency varchar(3) [not null]
+
+  daily_budget bigint [not null]
+  monthly_budget bigint
+
+  alert_threshold int [default: 80] // percent (0-100) — enforce CHECK (>= 0 AND <= 100) in migrations
+
+  auto_suspend_daily boolean [default: false]  // Phase 2 — not enforced in v1
+  auto_suspend_monthly boolean [default: false] // Phase 2 — not enforced in v1
+
+  logo varchar(255)
+  description text
+
+  deleted_at timestamptz // soft delete — for scalability
+
+  created_at timestamptz
+  updated_at timestamptz
+
+  Indexes {
+    (user_id, slug) [unique, name: 'uniq_user_project_slug'] // Gap §1.4: prevents duplicate project slugs per account
+  }
+}
+
+Ref: projects.user_id > users.id
+
+
+// =============================
+// COST EVENTS (Financial Ledger)
+// =============================
+
+Table cost_events {
+  id bigserial [pk]
+  project_id uuid [not null]
+  cost bigint [not null] // smallest currency unit
+  currency varchar(3) [not null] // inherited from project at write time
+  feature_key varchar(100)
+  user_key varchar(100) // developer's app user ID
+  tracked_at timestamptz [not null]
+  deleted_at timestamptz // Gap §2.2: soft retention — PRD specifies 30-day raw event policy
+  created_at timestamptz
+
+  Indexes {
+    (project_id, tracked_at) [name: 'idx_events_timeline']
+    (project_id, feature_key, tracked_at) [name: 'idx_events_feature']
+    (project_id, user_key, tracked_at) [name: 'idx_events_user']
+  }
+}
+
+Ref: cost_events.project_id > projects.id
+
+
+// =============================
+// DAILY COSTS (Aggregated Layer)
+// =============================
+
+Table daily_costs {
+  project_id uuid [not null]
+  date date [not null] // always UTC
+  total_cost bigint [not null]
+  total_requests int [not null]
+  warning_sent boolean [default: false]
+  critical_sent boolean [default: false]
+  updated_at timestamptz
+
+  Indexes {
+    (project_id, date) [pk]
+  }
+}
+
+Ref: daily_costs.project_id > projects.id
+
+
+// =============================
+// BUDGET ALERTS (Audit Layer)
+// =============================
+
+Table budget_alerts {
+  id bigserial [pk]
+  project_id uuid [not null]
+  type alert_type [not null]
+  cost bigint [not null] // actual cost when alert fired
+  budget bigint [not null] // budget limit at time of alert
+  date date [not null] // UTC date of the budget period
+  sent_at timestamptz [not null]
+
+  Indexes {
+    (project_id, date) [name: 'idx_alerts_project_date'] // Gap §2.1: dashboard + investigation queries filter by project + date
+  }
+}
+
+Ref: budget_alerts.project_id > projects.id

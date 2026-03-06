@@ -13,6 +13,7 @@ import Pricing from './pages/public/Pricing';
 import Overview from './pages/app/Overview';
 import Projects from './pages/app/Projects';
 import ProjectDetail from './pages/app/ProjectDetail';
+import ProjectAlerts from './pages/app/ProjectAlerts';
 import Billing from './pages/app/Billing';
 import Settings from './pages/app/Settings';
 
@@ -33,6 +34,7 @@ function App() {
           <Route index element={<Overview />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
+          <Route path="projects/:id/alerts" element={<ProjectAlerts />} />
           <Route path="billing" element={<Billing />} />
           <Route path="settings" element={<Settings />} />
         </Route>

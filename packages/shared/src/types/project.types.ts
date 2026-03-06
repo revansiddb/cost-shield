@@ -55,3 +55,21 @@ export interface ProjectSettingsResponse {
   daily_budget: number;
   alert_threshold: number;
 }
+
+// =============================
+// Project Alert History
+// =============================
+
+export interface ProjectAlert {
+  id: string;
+  type: 'warning' | 'critical';
+  cost: number;
+  budget: number;
+  date: string;
+  sentAt: string;
+}
+
+export interface ProjectAlertsResponse {
+  success: true;
+  data: ProjectAlert[];
+}

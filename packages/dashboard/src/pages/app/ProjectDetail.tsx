@@ -1,16 +1,18 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, AlertTriangle, Bell } from 'lucide-react';
 
 import { useProjectDetail } from '../../hooks/useProjectDetail';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { TrendChart } from '../../components/dashboard/TrendChart';
 import { IntegrationPanel } from '../../components/project/IntegrationPanel';
+import { ProjectSettingsModal } from '../../components/project/ProjectSettingsModal';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Badge } from '../../components/ui/badge';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { project, todayUsage, trend7d, trial, integration, isLoading, isError } = useProjectDetail(id);
 
   const formatCurrency = (val: number) => {
@@ -89,7 +91,13 @@ export default function ProjectDetail() {
             <span>Created {formattedDate}</span>
           </div>
         </div>
-        {integration && <IntegrationPanel integration={integration} />}
+        <div className="flex items-center gap-2">
+          {integration && <IntegrationPanel integration={integration} />}
+          <Button variant="outline" size="sm" onClick={() => navigate(`/app/projects/${id}/alerts`)}>
+            <Bell className="mr-2 h-4 w-4" /> View Alerts
+          </Button>
+          <ProjectSettingsModal project={project} />
+        </div>
       </div>
 
       {/* ─── Trial Warning Banner ───────────────────────────────────── */}

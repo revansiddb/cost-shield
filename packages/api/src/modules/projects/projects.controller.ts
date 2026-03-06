@@ -126,6 +126,39 @@ export const projectsController = {
   },
 
   /**
+   * GET /api/v1/projects/:id/alerts
+   */
+  async getProjectAlerts(req: Request<{ id: string }>, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const projectId = req.params.id;
+
+      const alerts = await projectsService.getProjectAlerts(projectId, userId);
+
+      if (alerts === null) {
+        res.status(403).json({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Project not found or unauthorized' },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: alerts,
+      });
+    } catch (error) {
+      logger.error('Failed to get project alerts', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Internal Server Error' },
+      });
+    }
+  },
+
+  /**
    * PATCH /api/v1/projects/:id
    */
   async updateProjectSettings(req: Request, res: Response): Promise<void> {

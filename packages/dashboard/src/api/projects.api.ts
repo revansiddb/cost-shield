@@ -99,3 +99,61 @@ export const getProjectDetail = async (projectId: string): Promise<ProjectDashbo
   const { data } = await apiClient.get(`/projects/${projectId}`);
   return data.data as ProjectDashboardResponse;
 };
+
+// ─── Update Project Settings ─────────────────────────────────────────────────
+
+export interface UpdateProjectPayload {
+  name?: string;
+  dailyBudget?: number;
+  alertThreshold?: number;
+}
+
+export interface UpdateProjectResponse {
+  success: boolean;
+  data?: ProjectDetailMeta;
+  error?: {
+    code: string;
+    message: string;
+    details?: Array<{ field: string; message: string }>;
+  };
+}
+
+// ─── Project Alert History ────────────────────────────────────────────────────
+
+export interface ProjectAlert {
+  id: string;
+  type: 'warning' | 'critical';
+  cost: number;
+  budget: number;
+  date: string;
+  sentAt: string;
+}
+
+export const getProjectAlerts = async (projectId: string): Promise<ProjectAlert[]> => {
+  const { data } = await apiClient.get(`/projects/${projectId}/alerts`);
+  if (data.success && data.data) {
+    return data.data as ProjectAlert[];
+  }
+  return [];
+};
+
+// ─── Update Project Settings ─────────────────────────────────────────────────
+
+export const updateProject = async (
+  projectId: string,
+  payload: UpdateProjectPayload,
+): Promise<UpdateProjectResponse> => {
+  try {
+    const { data } = await apiClient.patch<UpdateProjectResponse>(
+      `/projects/${projectId}`,
+      payload,
+    );
+    return data;
+  } catch (error: unknown) {
+    const axiosErr = error as { response?: { data?: UpdateProjectResponse } };
+    if (axiosErr.response?.data?.error) {
+      return axiosErr.response.data;
+    }
+    throw error;
+  }
+};

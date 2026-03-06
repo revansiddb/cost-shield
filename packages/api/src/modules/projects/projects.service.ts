@@ -7,9 +7,10 @@ import type {
   ProjectTodayUsage,
   ProjectTrendPoint,
   ProjectTrialStatus,
+  ProjectAlert,
 } from '@costshield/shared';
 
-import { Project, DailyCost, Subscription } from '../../models';
+import { Project, DailyCost, Subscription, BudgetAlert } from '../../models';
 import { generateApiKey } from '../../utils/apiKey';
 
 export interface CreateProjectDTO {
@@ -268,5 +269,38 @@ export const projectsService = {
       daily_budget: Number(project.dailyBudget),
       alert_threshold: project.alertThreshold,
     };
+  },
+
+  /**
+   * Fetch recent budget alerts for a project owned by the given user.
+   * Returns null if the project doesn't exist or doesn't belong to the user.
+   */
+  async getProjectAlerts(
+    projectId: string,
+    userId: string,
+    limit: number = 50,
+  ): Promise<ProjectAlert[] | null> {
+    const project = await Project.findOne({
+      where: { id: projectId, userId },
+      attributes: ['id'],
+    });
+
+    if (!project) return null;
+
+    const alerts = await BudgetAlert.findAll({
+      where: { projectId },
+      attributes: ['id', 'type', 'cost', 'budget', 'date', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
+
+    return alerts.map((a) => ({
+      id: a.id,
+      type: a.type,
+      cost: Number(a.cost),
+      budget: Number(a.budget),
+      date: a.date,
+      sentAt: a.createdAt.toISOString(),
+    }));
   },
 };
