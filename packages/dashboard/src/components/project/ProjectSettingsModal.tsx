@@ -66,7 +66,11 @@ export function ProjectSettingsModal({ project }: ProjectSettingsModalProps) {
       if (!response.success && response.error) {
         if (response.error.code === 'VALIDATION_ERROR' && response.error.details) {
           response.error.details.forEach((err) => {
-            const field = err.field as keyof FormValues;
+            let field = err.field as keyof FormValues;
+            // Map snake_case server field to camelCase UI field
+            if (err.field === 'daily_budget') field = 'dailyBudget';
+            if (err.field === 'alert_threshold') field = 'alertThreshold';
+
             if (field in errors || ['name', 'dailyBudget', 'alertThreshold'].includes(field)) {
               setError(field, { message: err.message });
             }
@@ -97,8 +101,8 @@ export function ProjectSettingsModal({ project }: ProjectSettingsModalProps) {
   const onSubmit = (values: FormValues) => {
     const payload: UpdateProjectPayload = {
       name: values.name.trim(),
-      dailyBudget: parseFloat(values.dailyBudget),
-      alertThreshold: parseInt(values.alertThreshold, 10),
+      daily_budget: Math.round(parseFloat(values.dailyBudget) * 100),
+      alert_threshold: parseInt(values.alertThreshold, 10),
     };
     mutation.mutate(payload);
   };

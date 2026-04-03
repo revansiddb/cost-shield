@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, FolderGit2, CreditCard, Settings, ShieldAlert } from 'lucide-react';
+import { Home, FolderGit2, Settings, ShieldAlert, Bell } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export function Sidebar() {
   const navItems = [
     { label: 'Overview', path: '/app', icon: Home, exact: true },
     { label: 'Projects', path: '/app/projects', icon: FolderGit2, exact: false },
-    { label: 'Billing', path: '/app/billing', icon: CreditCard, exact: false },
+    { label: 'Alerts', path: '/app/alerts', icon: Bell, exact: false },
     { label: 'Settings', path: '/app/settings', icon: Settings, exact: false },
   ];
 

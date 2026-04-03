@@ -1,19 +1,24 @@
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, Bell } from 'lucide-react';
 
 import { useProjectDetail } from '../../hooks/useProjectDetail';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { TrendChart } from '../../components/dashboard/TrendChart';
-import { IntegrationPanel } from '../../components/project/IntegrationPanel';
 import { ProjectSettingsModal } from '../../components/project/ProjectSettingsModal';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Badge } from '../../components/ui/badge';
+import { cn } from '../../lib/utils';
+
+type DateRange = '7d' | '30d';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { project, todayUsage, trend7d, trial, integration, isLoading, isError } = useProjectDetail(id);
+  const [dateRange, setDateRange] = useState<DateRange>('7d');
+
+  const { project, todayUsage, trend, trial, isLoading, isError } = useProjectDetail(id);
 
   const formatCurrency = (val: number) => {
     return `$${(val / 100).toFixed(2)}`;
@@ -91,8 +96,26 @@ export default function ProjectDetail() {
             <span>Created {formattedDate}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {integration && <IntegrationPanel integration={integration} />}
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* ── Date Range Toggle ── */}
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-0.5 gap-0.5">
+            {(['7d', '30d'] as DateRange[]).map((range) => (
+              <button
+                key={range}
+                onClick={() => setDateRange(range)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150',
+                  dateRange === range
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                )}
+              >
+                {range === '7d' ? 'Last 7 days' : 'Last 30 days'}
+              </button>
+            ))}
+          </div>
+
           <Button variant="outline" size="sm" onClick={() => navigate(`/app/projects/${id}/alerts`)}>
             <Bell className="mr-2 h-4 w-4" /> View Alerts
           </Button>
@@ -134,12 +157,10 @@ export default function ProjectDetail() {
         />
       </div>
 
-      {/* ─── Section 3: Cost Trend Chart ────────────────────────────── */}
-      <TrendChart data={trend7d} />
+      {/* ─── Section 3: Cost Trend Chart (respects dateRange) ────────── */}
+      <TrendChart data={trend} days={dateRange === '7d' ? 7 : 30} />
 
-
-
-      {/* ─── Section 5: Trial Status Footer ─────────────────────────── */}
+      {/* ─── Section 4: Trial Status Footer ─────────────────────────── */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 flex items-center justify-between">
         <div className="space-y-0.5">
           <p className="text-sm font-medium">Subscription Status</p>

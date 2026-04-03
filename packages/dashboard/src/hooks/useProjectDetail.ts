@@ -12,7 +12,7 @@ export const useProjectDetail = (projectId: string | undefined) => {
   return {
     project: data?.project ?? null,
     todayUsage: data?.todayUsage ?? null,
-    trend7d: data?.trend7d ?? [],
+    trend: data?.trend ?? [],
     trial: data?.trial ?? null,
     integration: data?.integration ?? null,
     isLoading,

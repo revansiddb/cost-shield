@@ -143,7 +143,7 @@ export default function Overview() {
       {isDashboardLoading ? (
         <Skeleton className="h-[280px] w-full rounded-xl" />
       ) : (
-        <TrendChart data={dashboard?.trend ?? []} />
+        <TrendChart data={dashboard?.trend ?? []} days={range === '7d' ? 7 : 30} />
       )}
 
       {/* ─── Project Health Table ────────────────────────────────────── */}

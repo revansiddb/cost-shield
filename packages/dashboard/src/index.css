@@ -67,6 +67,10 @@
 }
  
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--primary) var(--background);
+  }
   * {
     @apply border-border;
   }

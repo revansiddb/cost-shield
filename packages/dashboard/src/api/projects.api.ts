@@ -90,7 +90,7 @@ export interface ProjectIntegrationInfo {
 export interface ProjectDashboardResponse {
   project: ProjectDetailMeta;
   todayUsage: ProjectTodayUsage;
-  trend7d: ProjectTrendPoint[];
+  trend: ProjectTrendPoint[];
   trial: ProjectTrialStatus;
   integration: ProjectIntegrationInfo;
 }
@@ -104,13 +104,18 @@ export const getProjectDetail = async (projectId: string): Promise<ProjectDashbo
 
 export interface UpdateProjectPayload {
   name?: string;
-  dailyBudget?: number;
-  alertThreshold?: number;
+  daily_budget?: number;
+  alert_threshold?: number;
 }
 
 export interface UpdateProjectResponse {
   success: boolean;
-  data?: ProjectDetailMeta;
+  data?: {
+    id: string;
+    name: string;
+    daily_budget: number;
+    alert_threshold: number;
+  };
   error?: {
     code: string;
     message: string;

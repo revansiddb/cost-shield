@@ -38,7 +38,7 @@ export interface ProjectIntegrationInfo {
 export interface ProjectDashboardResponse {
   project: ProjectDetailMeta;
   todayUsage: ProjectTodayUsage;
-  trend7d: ProjectTrendPoint[];
+  trend: ProjectTrendPoint[];
   trial: ProjectTrialStatus;
   integration: ProjectIntegrationInfo;
 }

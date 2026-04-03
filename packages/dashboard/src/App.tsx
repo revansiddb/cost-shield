@@ -8,6 +8,7 @@ import { ProtectedLayout } from './layouts/ProtectedLayout';
 import Landing from './pages/public/Landing';
 import Login from './pages/public/Login';
 import Pricing from './pages/public/Pricing';
+import DocsPage from './pages/public/Docs';
 
 // Protected Pages
 import Overview from './pages/app/Overview';
@@ -21,12 +22,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Standalone Public Routes */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Public Routes (with Header/Footer) */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/pricing" element={<Pricing />} />
-          {/* Docs placeholder could route here if needed */}
+          <Route path="/docs" element={<DocsPage />} />
         </Route>
 
         {/* Protected Dashboard Routes */}

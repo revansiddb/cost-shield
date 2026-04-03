@@ -136,9 +136,9 @@ export const projectsService = {
 
     // Build date boundaries
     const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD in UTC
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // includes today = 7 days
-    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29); // includes today = 30 days
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
     // 2. Run all three queries in parallel
     const [todayRow, trendRows, subscription] = await Promise.all([
@@ -152,7 +152,7 @@ export const projectsService = {
       DailyCost.findAll({
         where: {
           projectId,
-          date: { [Op.between]: [sevenDaysAgoStr, todayStr] },
+          date: { [Op.between]: [thirtyDaysAgoStr, todayStr] },
         },
         attributes: ['date', 'totalCost'],
         order: [['date', 'ASC']],
@@ -187,12 +187,12 @@ export const projectsService = {
       trendMap.set(row.date, Number(row.totalCost));
     }
 
-    const trend7d: ProjectTrendPoint[] = [];
-    for (let i = 6; i >= 0; i--) {
+    const trend: ProjectTrendPoint[] = [];
+    for (let i = 29; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      trend7d.push({
+      trend.push({
         date: dateStr,
         cost: trendMap.get(dateStr) ?? 0,
       });
@@ -222,7 +222,7 @@ export const projectsService = {
         createdAt: project.createdAt.toISOString(),
       },
       todayUsage,
-      trend7d,
+      trend,
       trial,
       integration: {
         sdk_install: "npm install @costshield/sdk",
